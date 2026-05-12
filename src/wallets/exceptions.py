@@ -4,3 +4,7 @@ class NegativeValueException(Exception):
 
 class NotComparisonException(Exception):
     pass
+
+
+class CurrencyNotSupported(Exception):
+    pass
