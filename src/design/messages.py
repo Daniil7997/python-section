@@ -1,3 +1,4 @@
+from abc import ABC
 import enum
 from dataclasses import dataclass
 
@@ -17,3 +18,19 @@ class JsonMessage:
 @dataclass
 class ParsedMessage:
     """There is no need to describe anything here."""
+
+
+@dataclass
+class StandardMessage:
+    msg_id: str
+    user: str
+    text: str
+    timestamp: int
+
+
+class MessageParser(ABC):
+    pass
+
+
+class ParserFactory(ABC):
+    parsers: dict[MessageType, type[MessageParser]] = {}
