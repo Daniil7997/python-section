@@ -29,8 +29,39 @@ def request(query: Query) -> Page:
 
 
 class RetrieveRemoteData:
-    pass
+    def __init__(self, per_page: int = 3, start_page: int = 1):
+        self.per_page = per_page
+        self.start_page = start_page
+
+    def __iter__(self):
+        current_page = self.start_page
+        while current_page is not None:
+            page_data = request(Query(per_page=self.per_page,
+                                      page=current_page))
+            if not page_data.results:
+                break
+            for item in page_data.results:
+                yield item
+            current_page = page_data.next
 
 
 class Fibo:
-    pass
+    count = 0
+    curr = 1
+    prev = 0
+
+    def __init__(self, n: int):
+        self.n = n
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.count == self.n:
+            raise StopIteration
+        self.curr, self.prev = self.prev, self.prev + self.curr
+        self.count += 1
+        return self.curr
+
+    def current(self):
+        return self.curr
