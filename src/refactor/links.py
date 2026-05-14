@@ -1,36 +1,48 @@
-import datetime
-from datetime import date
+from datetime import date, datetime
+from typing import Iterable
 
 from bs4 import BeautifulSoup
+from bs4.element import ResultSet, Tag
 
 
-def parse_page_links(html: str, start_date: date, end_date: date, url: str):
-    """
-    Парсит ссылки на бюллетени с одной страницы:
-    <a class="accordeon-inner__item-title link xls" href="/upload/reports/oil_xls/oil_xls_20240101_test.xls">link1</a>
-    """
+def get_html_tags(html: str,
+                  html_tag: str | list[str],
+                  css_class: str | None = None,
+                  bs_method: str = 'html.parser') -> ResultSet[Tag]:
+
+    soup = BeautifulSoup(html, bs_method)
+    if css_class:
+        return soup.find_all(html_tag, class_=css_class)
+    else:
+        return soup.find_all(html_tag)
+
+
+def parse_oil_reports(links: ResultSet[Tag] | Iterable,
+                      start_date: date,
+                      end_date: date) -> list[tuple]:
+    url = "/upload/reports/oil_xls/oil_xls_"
     results = []
-    soup = BeautifulSoup(html, "html.parser")
-    links = soup.find_all("a", class_="accordeon-inner__item-title link xls")
-
     for link in links:
         href = link.get("href")
+
         if not href:
             continue
 
         href = href.split("?")[0]
-        if "/upload/reports/oil_xls/oil_xls_" not in href or not href.endswith(".xls"):
+        if url not in href or not href.endswith(".xls"):
             continue
 
         try:
-            date = href.split("oil_xls_")[1][:8]
-            file = datetime.datetime.strptime(date, "%Y%m%d").date()
+            date_str = href.split("oil_xls_")[1][:8]
+            file = datetime.strptime(date_str, "%Y%m%d").date()
             if start_date <= file <= end_date:
-                u = href if href.startswith("http") else f"https://spimex.com{href}"
+                if href.startswith("http"):
+                    u = href
+                else:
+                    u = f"https://spimex.com{href}"
                 results.append((u, file))
             else:
                 print(f"Ссылка {href} вне диапазона дат")
         except Exception as e:
             print(f"Не удалось извлечь дату из ссылки {href}: {e}")
-
     return results
